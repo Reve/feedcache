@@ -1,0 +1,7 @@
+*.pyc
+MANIFEST
+dist
+.tox
+TAGS
+build
+*.egg-info

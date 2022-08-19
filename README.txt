@@ -7,3 +7,5 @@ Universal Feed Parser module so that parameters can be used to cache
 the feed results locally instead of fetching the feed every time it is
 requested. Uses both etag and modified times for caching. The cache is
 parameterized to use different backend storage options.
+
+Compatible with Python 3

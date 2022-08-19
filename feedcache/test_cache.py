@@ -41,13 +41,13 @@ logger = logging.getLogger('feedcache.test_cache')
 import copy
 import time
 import unittest
-import UserDict
+from collections import UserDict
 
 #
 # Import local modules
 #
-import cache
-from test_server import HTTPTestBase, TestHTTPServer
+from . import cache
+from .test_server import HTTPTestBase, TestHTTPServer
 
 #
 # Module
@@ -152,11 +152,11 @@ class CacheTest(CacheTestBase):
     def testUnicodeURL(self):
         # Pass in a URL which is unicode
 
-        url = unicode(self.TEST_URL)
+        url = self.TEST_URL
         feed_data = self.cache.fetch(url)
 
         storage = self.cache.storage
-        key = unicode(self.TEST_URL).encode('UTF-8')
+        key = self.TEST_URL
 
         # Verify that the storage has a key
         self.failUnless(key in storage)
@@ -167,7 +167,7 @@ class CacheTest(CacheTestBase):
         return
 
 
-class SingleWriteMemoryStorage(UserDict.UserDict):
+class SingleWriteMemoryStorage(UserDict):
     """Cache storage which only allows the cache value
     for a URL to be updated one time.
     """
@@ -180,7 +180,7 @@ class SingleWriteMemoryStorage(UserDict.UserDict):
             if data[1] != existing:
                 raise AssertionError('Trying to update cache for %s to %s' \
                                          % (url, data))
-        UserDict.UserDict.__setitem__(self, url, data)
+        UserDict.__setitem__(self, url, data)
         return
 
 
@@ -314,8 +314,7 @@ class CachePurgeTest(CacheTestBase):
 
         self.cache.purge(1)
 
-        self.failUnlessEqual(self.storage.keys(),
-                             ['http://this.should.remain/'])
+        self.failUnlessEqual(list(self.storage), ['http://this.should.remain/'])
         return
 
 

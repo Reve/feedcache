@@ -32,13 +32,17 @@ __module_id__ = "$Id$"
 #
 # Import system modules
 #
-import BaseHTTPServer
+# import BaseHTTPServer
 import logging
-import md5
+
+# import md5
 import threading
 import time
 import unittest
-import urllib
+import urllib.request
+
+import hashlib
+from http import server as BaseHTTPServer
 
 #
 # Import local modules
@@ -48,15 +52,15 @@ import urllib
 #
 # Module
 #
-logger = logging.getLogger('feedcache.test_server')
+logger = logging.getLogger("feedcache.test_server")
 
 
 def make_etag(data):
     """Given a string containing data to be returned to the client,
     compute an ETag value for the data.
     """
-    _md5 = md5.new()
-    _md5.update(data)
+    _md5 = hashlib.md5()
+    _md5.update(bytes(data, "utf-8"))
     return _md5.hexdigest()
 
 
@@ -90,38 +94,40 @@ class TestHTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     # as class attributes.
     ETAG = make_etag(FEED_DATA)
     # Calculated using email.utils.formatdate(usegmt=True)
-    MODIFIED_TIME = 'Sun, 08 Apr 2012 20:16:48 GMT'
+    MODIFIED_TIME = "Sun, 08 Apr 2012 20:16:48 GMT"
 
     def do_GET(self):
         "Handle GET requests."
-        logger.debug('GET %s', self.path)
+        logger.debug("GET %s", self.path)
 
-        if self.path == '/shutdown':
+        if self.path == "/shutdown":
             # Shortcut to handle stopping the server
-            logger.debug('Stopping server')
-            self.server.stop()
+            logger.debug("Stopping server")
             self.send_response(200)
+            self.end_headers()
+            self.server.stop()
 
         else:
             # Record the request for tests that count them
             self.server.requests.append(self.path)
             # Process the request
-            logger.debug('pre-defined response code: %d', self.server.response)
-            handler_method_name = 'do_GET_%d' % self.server.response
+            logger.debug("pre-defined response code: %d", self.server.response)
+            handler_method_name = "do_GET_%d" % self.server.response
             handler_method = getattr(self, handler_method_name)
             handler_method()
         return
 
     def do_GET_3xx(self):
         "Handle redirects"
-        if self.path.endswith('/redirected'):
-            logger.debug('already redirected')
+        if self.path.endswith("/redirected"):
+            logger.debug("already redirected")
             # We have already redirected, so return the data.
             return self.do_GET_200()
         new_path = self.server.new_path
-        logger.debug('redirecting to %s', new_path)
+        logger.debug("redirecting to %s", new_path)
         self.send_response(self.server.response)
-        self.send_header('Location', new_path)
+        self.send_header("Location", new_path)
+        self.end_headers()
         return
 
     do_GET_301 = do_GET_3xx
@@ -130,46 +136,48 @@ class TestHTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     do_GET_307 = do_GET_3xx
 
     def do_GET_200(self):
-        logger.debug('Etag: %s' % self.ETAG)
-        logger.debug('Last-Modified: %s' % self.MODIFIED_TIME)
+        logger.debug("Etag: %s" % self.ETAG)
+        logger.debug("Last-Modified: %s" % self.MODIFIED_TIME)
 
-        incoming_etag = self.headers.get('If-None-Match', None)
+        incoming_etag = self.headers.get("If-None-Match", None)
         logger.debug('Incoming ETag: "%s"' % incoming_etag)
 
-        incoming_modified = self.headers.get('If-Modified-Since', None)
-        logger.debug('Incoming If-Modified-Since: %s' % incoming_modified)
+        incoming_modified = self.headers.get("If-Modified-Since", None)
+        logger.debug("Incoming If-Modified-Since: %s" % incoming_modified)
 
         send_data = True
 
         # Does the client have the same version of the data we have?
         if self.server.apply_modified_headers:
             if incoming_etag == self.ETAG:
-                logger.debug('Response 304, etag')
+                logger.debug("Response 304, etag")
                 self.send_response(304)
+                self.end_headers()
                 send_data = False
 
             elif incoming_modified == self.MODIFIED_TIME:
-                logger.debug('Response 304, modified time')
+                logger.debug("Response 304, modified time")
                 self.send_response(304)
+                self.end_headers()
                 send_data = False
 
         # Now optionally send the data, if the client needs it
         if send_data:
-            logger.debug('Response 200')
+            logger.debug("Response 200")
             self.send_response(200)
 
-            self.send_header('Content-Type', 'application/atom+xml')
+            self.send_header("Content-Type", "application/atom+xml")
 
-            logger.debug('Outgoing Etag: %s' % self.ETAG)
-            self.send_header('ETag', self.ETAG)
+            logger.debug("Outgoing Etag: %s" % self.ETAG)
+            self.send_header("ETag", self.ETAG)
 
-            logger.debug('Outgoing modified time: %s' % self.MODIFIED_TIME)
-            self.send_header('Last-Modified', self.MODIFIED_TIME)
+            logger.debug("Outgoing modified time: %s" % self.MODIFIED_TIME)
+            self.send_header("Last-Modified", self.MODIFIED_TIME)
 
             self.end_headers()
 
-            logger.debug('Sending data')
-            self.wfile.write(self.FEED_DATA)
+            logger.debug("Sending data")
+            self.wfile.write(self.FEED_DATA.encode("utf-8"))
         return
 
 
@@ -183,7 +191,7 @@ class TestHTTPServer(BaseHTTPServer.HTTPServer):
         self.keep_serving = True
         self.requests = []
         self.setResponse(200)
-        BaseHTTPServer.HTTPServer.__init__(self, ('', 9999), handler)
+        BaseHTTPServer.HTTPServer.__init__(self, ("", 9999), handler)
         return
 
     def setResponse(self, newResponse, newPath=None):
@@ -207,14 +215,14 @@ class TestHTTPServer(BaseHTTPServer.HTTPServer):
         "Main loop for server"
         while self.keep_serving:
             self.handle_request()
-        logger.debug('exiting')
+        logger.debug("exiting")
         return
 
 
 class HTTPTestBase(unittest.TestCase):
     "Base class for tests that use a TestHTTPServer"
 
-    TEST_URL = 'http://localhost:9999/'
+    TEST_URL = "http://127.0.0.1:9999/"
 
     CACHE_TTL = 0
 
@@ -227,14 +235,14 @@ class HTTPTestBase(unittest.TestCase):
         return
 
     def getServer(self):
-        "Return a web server for the test."
+        """Return a web server for the test."""
         s = TestHTTPServer()
         s.setResponse(200)
         return s
 
     def tearDown(self):
         # Stop the server thread
-        urllib.urlretrieve(self.TEST_URL + 'shutdown')
+        urllib.request.urlretrieve(self.TEST_URL + "shutdown")
         time.sleep(1)
         self.server.server_close()
         self.server_thread.join()

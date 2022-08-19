@@ -1,3 +1,7 @@
+2022-08-20 Alex Gheorghita <alex@agilegeeks.ro>
+	* ported code to work with python3
+	* added Dockerfile to support library development under Docker
+
 2007-11-25  Doug Hellmann  <doug.hellmann@gmail.com>
 
 	* feedcache/test_server.py (TestHTTPServer.__init__): Initialize

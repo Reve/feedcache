@@ -28,17 +28,17 @@
 
 # Bootstrap installation of Distribute
 import distribute_setup
+
 distribute_setup.use_setuptools()
 
 from setuptools import setup
 
-PROJECT = 'feedcache'
-VERSION = '1.4.1'
+PROJECT = "feedcache"
+VERSION = "2.0"
 
 setup(
     name=PROJECT,
     version=VERSION,
-
     description="Wrapper for Mark Pilgrim's FeedParser module which caches feed content.",
     long_description="""
 A class to wrap Mark Pilgrim's FeedParser module so that parameters
@@ -47,25 +47,21 @@ feed every time it is requested. Uses both etag and modified times for
 caching.  The cache is parameterized to use different backend storage
 options.
 """,
-
-    author='Doug Hellmann',
-    author_email='doug.hellmann@gmail.com',
-
-    url='http://feedcache.readthedocs.org',
-
-    classifiers=['Development Status :: 4 - Beta',
-                 'License :: OSI Approved :: BSD License',
-                 'Programming Language :: Python',
-                 'Intended Audience :: Developers',
-                 'Topic :: Internet :: WWW/HTTP',
-                 ],
-
-    packages=['feedcache',
-              ],
-    package_dir={'': '.'},
-
-    platforms=['Any'],
-    keywords=('syndication', 'atom', 'RSS'),
-
-    requires=['feedparser'],
-    )
+    author="Doug Hellmann",
+    author_email="doug.hellmann@gmail.com",
+    url="http://feedcache.readthedocs.org",
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "License :: OSI Approved :: BSD License",
+        "Programming Language :: Python",
+        "Intended Audience :: Developers",
+        "Topic :: Internet :: WWW/HTTP",
+    ],
+    packages=[
+        "feedcache",
+    ],
+    package_dir={"": "."},
+    platforms=["Any"],
+    keywords=("syndication", "atom", "RSS"),
+    requires=["feedparser"],
+)

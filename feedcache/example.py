@@ -44,20 +44,21 @@ import cache
 # Module
 #
 
+
 def main(urls=[]):
-    print 'Saving feed data to ./.feedcache'
-    storage = shelve.open('.feedcache')
+    print("Saving feed data to ./.feedcache")
+    storage = shelve.open(".feedcache")
     try:
         fc = cache.Cache(storage)
         for url in urls:
             parsed_data = fc.fetch(url)
-            print parsed_data.feed.title
+            print(parsed_data.feed.title)
             for entry in parsed_data.entries:
-                print '\t', entry.title
+                print("\t", entry.title)
     finally:
         storage.close()
     return
 
-if __name__ == '__main__':
-    main(sys.argv[1:])
 
+if __name__ == "__main__":
+    main(sys.argv[1:])

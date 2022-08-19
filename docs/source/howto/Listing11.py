@@ -9,14 +9,14 @@ import threading
 
 from Listing8 import Cache
 
-MAX_THREADS=5
-OUTPUT_DIR='/tmp/feedcache_example'
+MAX_THREADS = 5
+OUTPUT_DIR = "/tmp/feedcache_example"
 
 
 def main(urls=[]):
 
     if not urls:
-        print 'Specify the URLs to a few RSS or Atom feeds on the command line.'
+        print("Specify the URLs to a few RSS or Atom feeds on the command line.")
         return
 
     # Add the URLs to a queue
@@ -32,15 +32,21 @@ def main(urls=[]):
     # Track the entries in the feeds being fetched
     entry_queue = Queue.Queue()
 
-    print 'Saving feed data to', OUTPUT_DIR
-    storage = shove.Shove('file://' + OUTPUT_DIR)
+    print("Saving feed data to", OUTPUT_DIR)
+    storage = shove.Shove("file://" + OUTPUT_DIR)
     try:
 
         # Start a few worker threads
         worker_threads = []
         for i in range(MAX_THREADS):
-            t = threading.Thread(target=fetch_urls, 
-                                 args=(storage, url_queue, entry_queue,))
+            t = threading.Thread(
+                target=fetch_urls,
+                args=(
+                    storage,
+                    url_queue,
+                    entry_queue,
+                ),
+            )
             worker_threads.append(t)
             t.setDaemon(True)
             t.start()
@@ -58,47 +64,44 @@ def main(urls=[]):
             t.join()
 
         # Poison the print thread and wait for it to exit
-        entry_queue.put((None,None))
+        entry_queue.put((None, None))
         entry_queue.join()
-        printer_thread.join()        
-        
+        printer_thread.join()
+
     finally:
         storage.close()
     return
 
 
 def fetch_urls(storage, input_queue, output_queue):
-    """Thread target for fetching feed data.
-    """
+    """Thread target for fetching feed data."""
     c = Cache(storage)
 
     while True:
         next_url = input_queue.get()
-        if next_url is None: # None causes thread to exit
+        if next_url is None:  # None causes thread to exit
             input_queue.task_done()
             break
 
         feed_data = c.fetch(next_url)
         for entry in feed_data.entries:
-            output_queue.put( (feed_data.feed, entry) )
+            output_queue.put((feed_data.feed, entry))
         input_queue.task_done()
     return
 
 
 def print_entries(input_queue):
-    """Thread target for printing the contents of the feeds.
-    """
+    """Thread target for printing the contents of the feeds."""
     while True:
         feed, entry = input_queue.get()
-        if feed is None: # None causes thread to exist
+        if feed is None:  # None causes thread to exist
             input_queue.task_done()
             break
 
-        print '%s: %s' % (feed.title, entry.title)
+        print("%s: %s" % (feed.title, entry.title))
         input_queue.task_done()
     return
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv[1:])
-

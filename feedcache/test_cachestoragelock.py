@@ -35,15 +35,14 @@ __module_id__ = "$Id$"
 import os
 import shelve
 import tempfile
-import threading
 import unittest
 
 #
 # Import local modules
 #
-from cache import Cache
-from cachestoragelock import CacheStorageLock
-from test_server import HTTPTestBase
+from .cache import Cache
+from .cachestoragelock import CacheStorageLock
+from .test_server import HTTPTestBase
 
 #
 # Module
@@ -78,7 +77,7 @@ class CacheShelveTest(HTTPTestBase):
 
             # Now retrieve the same data directly from the shelf
             modified, shelved_data = storage[self.TEST_URL]
-            
+
             # The data should be the same
             self.failUnlessEqual(parsed_data, shelved_data)
         finally:

@@ -35,14 +35,13 @@ __module_id__ = "$Id$"
 import os
 import shove
 import tempfile
-import threading
 import unittest
 
 #
 # Import local modules
 #
-from cache import Cache
-from test_server import HTTPTestBase
+from .cache import Cache
+from .test_server import HTTPTestBase
 
 #
 # Module
@@ -79,7 +78,7 @@ class CacheShoveTest(HTTPTestBase):
             modified, shelved_data = storage[self.TEST_URL]
         finally:
             storage.close()
-            
+
         # The data should be the same
         self.failUnlessEqual(parsed_data, shelved_data)
         return
